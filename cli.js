@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var currentPath = process.cwd();
+let fs = require('fs');
 
 // Command list
 var command = {
@@ -9,6 +10,12 @@ var command = {
 		call(env='development'){
 			process.stdout.write("Loading scarletsframe-compiler\r");
 			let isProduction = process.env.production === 'true' || env === 'prod' || env === 'production';
+
+			if(!fs.existsSync(`${currentPath}/blackprint.config.js`)
+			   && !fs.existsSync(`${currentPath}/nodes/`)){
+				console.error("Config file (./blackprint.config.js) or nodes folder was not found (nodes/**/blackprint.config.js)");
+				process.exit(1);
+			}
 
 			let Gulp = require('gulp');
 			let SFC = require("scarletsframe-compiler")({
@@ -47,13 +54,13 @@ var command = {
 
 // No need to modify below
 var args = process.argv.slice(2);
-if(args[0] === void 0 || /-h|--h|\/h|\/help|help/.test(args)){
+if(args[0] === void 0 || /-h|--h|\/h|\/help|help/.test(args[0])){
 	console.log("Available commands:");
 
 	for(let key in command)
 		console.log(' - '+key+': '+command[key].shortDesc);
 }
-else if(command[args[0]]){
+else if(command[args[0]] !== void 0){
 	if(/-h|--h|\/h|\/help|help/.test(args[1])){
 		console.log(command[args[0]].longDesc);
 		return;
