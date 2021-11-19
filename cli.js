@@ -8,8 +8,9 @@ var command = {
 		shortDesc: "Compile Blackprint nodes for current project (JavaScript)",
 		longDesc: "Example command:\nblackprint build production",
 		call(env='development'){
-			process.stdout.write("Loading scarletsframe-compiler\r");
 			let isProduction = process.env.production === 'true' || env === 'prod' || env === 'production';
+
+			// env = @serve, for internal use only
 
 			if(!fs.existsSync(`${currentPath}/blackprint.config.js`)
 			   && !fs.existsSync(`${currentPath}/nodes/`)){
@@ -17,10 +18,13 @@ var command = {
 				process.exit(1);
 			}
 
+			process.stdout.write("Loading Gulp\r");
 			let Gulp = require('gulp');
+
+			process.stdout.write("Loading scarletsframe-compiler\r");
 			let SFC = require("scarletsframe-compiler")({
 				// Start the server
-				browserSync: !isProduction && {
+				browserSync: env === '@serve' && {
 					port: process.env.PORT || 6791, // Accessible-> http://localhost:6789
 					ghostMode: false, // Use synchronization between browser?
 					ui: false,
@@ -48,6 +52,13 @@ var command = {
 
 			require('./blackprint-config-loader.js')(SFC, Gulp);
 			Gulp.task('default')();
+		}
+	},
+	serve: {
+		shortDesc: "Create a server for compiled Blackprint nodes",
+		longDesc: "Example command:\nblackprint serve",
+		call(){
+			command.build.call('@serve');
 		}
 	}
 };
