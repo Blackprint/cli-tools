@@ -2,3 +2,4 @@
 /pnpm-lock.yaml
 /example/
 *.map
+package-lock.json
