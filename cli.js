@@ -5,7 +5,7 @@ let fs = require('fs');
 // Command list
 var command = {
 	build: {
-		shortDesc: "Compile Blackprint nodes for current project (JavaScript)",
+		shortDesc: "Compile Blackprint modules for current project (JavaScript)",
 		longDesc: "Example command:\nblackprint build production",
 		call(env='development'){
 			let isProduction = process.env.production === 'true' || env === 'prod' || env === 'production';
@@ -14,7 +14,7 @@ var command = {
 
 			if(!fs.existsSync(`${currentPath}/blackprint.config.js`)
 			   && !fs.existsSync(`${currentPath}/nodes/`)){
-				console.error("Config file (./blackprint.config.js) or nodes folder was not found (nodes/**/blackprint.config.js)");
+				console.error("Config file (./blackprint.config.js) or modules folder was not found (nodes/**/blackprint.config.js)");
 				process.exit(1);
 			}
 
@@ -31,9 +31,19 @@ var command = {
 					open: false,
 
 					// Standalone server with BrowserSync
-					server:{
-						baseDir:'./'
-					}
+					cors: true,
+					server:{ baseDir:'./dist' },
+					serveStatic: [{
+						route: '/dist',
+						dir: 'dist'
+					}],
+					middleware: [{
+						route: "/api/module-list",
+						handle(req, res, next){
+							res.end(JSON.stringify(configLoader.moduleList));
+							next();
+						}
+					}]
 				},
 
 				// Transpile + Minify
@@ -50,12 +60,12 @@ var command = {
 				path: {}
 			}, Gulp);
 
-			require('./blackprint-config-loader.js')(SFC, Gulp);
+			let configLoader = require('./blackprint-config-loader.js')(SFC, Gulp);
 			Gulp.task('default')();
 		}
 	},
 	serve: {
-		shortDesc: "Create a server for compiled Blackprint nodes",
+		shortDesc: "Create a server for compiled Blackprint modules",
 		longDesc: "Example command:\nblackprint serve",
 		call(){
 			command.build.call('@serve');

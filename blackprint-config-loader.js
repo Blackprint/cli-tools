@@ -5,6 +5,7 @@ var currentPath = process.cwd();
 
 module.exports = function(SFC, Gulp){
 	let resolvePath = require('path').resolve;
+	let moduleList = {};
 	let configWatch = Gulp.watch([
 		"blackprint.config.js",
 		"nodes/**/blackprint.config.js"
@@ -52,6 +53,9 @@ module.exports = function(SFC, Gulp){
 		let config = require(_path);
 		delete require.cache[resolvePath(_path)];
 
+		if(!config.name)
+			throw new Error("Blackprint config must have a name, please use the template if you're creating new project.");
+
 		if(config.js && config.js.combine){
 			let temp = config.js.combine;
 			if(temp.constructor === String)
@@ -90,9 +94,20 @@ module.exports = function(SFC, Gulp){
 			}
 		});
 
+		let moduleUrl = '';
 		['js', 'scss', 'html', 'sf'].forEach(which => {
 			let that = config[which];
 			if(that){
+				if(moduleUrl === '' || which === 'js'){
+					moduleUrl = that.file.replace('@cwd', '');
+					if(which === 'sf'){
+						if(that.wrapped && that.wrapped.includes('mjs'))
+							moduleUrl += '.mjs';
+						else
+							moduleUrl += '.js';
+					}
+				}
+
 				that.header = config.header;
 				that.file = convertCWD(that.file, dirPath);
 
@@ -106,6 +121,7 @@ module.exports = function(SFC, Gulp){
 
 			SFC.deleteConfig(oldConfig[_path]);
 			console.log(`[Blackprint] "${config.name}" config was removed`);
+			delete moduleList[config.name];
 			return;
 		}
 		// else => When config updated/created
@@ -115,25 +131,36 @@ module.exports = function(SFC, Gulp){
 
 			SFC.importConfig(config.name, config);
 			console.log(`[Blackprint] "${config.name}" config was added`);
+			moduleList[config.name] = moduleUrl;
 		}
 		else { // on changed
 			if(oldConfig[_path] === void 0){
 				SFC.importConfig(config.name, config);
+				moduleList[config.name] = moduleUrl;
 				console.log(`[Blackprint] "${config.name}" config was enabled`);
 			}
 			else{
+				let old = oldConfig[_path];
 				SFC.deleteConfig(oldConfig[_path]);
 				if(config.disabled){
 					delete oldConfig[_path];
+					delete moduleList[config.name];
 					console.log(`[Blackprint] "${config.name}" config was disabled`);
 					return;
 				}
 
 				SFC.importConfig(config.name, config);
 				console.log(`[Blackprint] "${config.name}" config reloaded`);
+
+				delete moduleList[old.name];
+				moduleList[config.name] = moduleUrl;
 			}
 		}
 
 		oldConfig[_path] = config;
 	});
+
+	return {
+		moduleList
+	};
 }
