@@ -1,7 +1,7 @@
 {
   "name": "@blackprint/cli-tools",
   "description": "Blackprint CLI tools",
-  "version": "0.3.10",
+  "version": "0.3.12",
   "author": "ScarletsFiction",
   "license": "MIT",
   "repository": {
@@ -23,7 +23,7 @@
     "@babel/preset-env": "^7.16.4",
     "chalk": "^4.1.1",
     "gulp": "^4.0.2",
-    "scarletsframe-compiler": "0.6.12"
+    "scarletsframe-compiler": "0.6.14"
   },
   "keywords": [
     "blackprint"
