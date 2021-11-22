@@ -46,9 +46,6 @@ var command = {
 					}]
 				},
 
-				// Transpile + Minify
-				_compiling: isProduction,
-
 				includeSourceMap: true,
 				startupCompile: true,
 				hotReload:{
@@ -61,7 +58,10 @@ var command = {
 			}, Gulp);
 
 			let configLoader = require('./blackprint-config-loader.js')(SFC, Gulp);
-			Gulp.task('default')();
+
+			if(isProduction)
+				Gulp.task('compile')(); // Transpile + Minify
+			else Gulp.task('default')();
 		}
 	},
 	serve: {
