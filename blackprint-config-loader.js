@@ -7,8 +7,10 @@ module.exports = function(SFC, Gulp){
 	let resolvePath = require('path').resolve;
 	let moduleList = {};
 	let configWatch = Gulp.watch([
-		"blackprint.config.js",
-		"nodes/**/blackprint.config.js"
+		currentPath+"/blackprint.config.js",
+		currentPath+"/src/**/blackprint.config.js",
+		currentPath+"/nodes/**/blackprint.config.js",
+		currentPath+"/nodes-*/**/blackprint.config.js",
 	], {ignoreInitial: false});
 
 	function convertCWD(paths, dirPath){
