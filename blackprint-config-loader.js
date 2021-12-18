@@ -44,7 +44,7 @@ module.exports = function(SFC, Gulp){
 
 	let oldConfig = {};
 	configWatch.on('all', function(event, path){
-		path = currentPath+'/'+path.split('\\').join('/');
+		path = path.split('\\').join('/');
 		if(path.includes('/_template/')) return;
 
 		if(event !== 'add' && event !== 'change' && event !== 'removed')
