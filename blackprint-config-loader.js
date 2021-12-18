@@ -1,17 +1,22 @@
 var fs = require('fs');
 var Path = require('path');
 var chalk = require('chalk');
+var chokidar = require('chokidar');
 var currentPath = process.cwd();
 
 module.exports = function(SFC, Gulp){
 	let resolvePath = require('path').resolve;
 	let moduleList = {};
-	let configWatch = Gulp.watch([
+
+	let configWatch = chokidar.watch([
 		currentPath+"/blackprint.config.js",
 		currentPath+"/src/**/blackprint.config.js",
 		currentPath+"/nodes/**/blackprint.config.js",
 		currentPath+"/nodes-*/**/blackprint.config.js",
-	], {ignoreInitial: false});
+	], {
+		ignoreInitial: false,
+		ignored: (path => path.includes('node_modules') || path.includes('.git') || path.includes('turbo_modules'))
+	});
 
 	function convertCWD(paths, dirPath){
 		dirPath += '/';
