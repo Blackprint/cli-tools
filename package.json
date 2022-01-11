@@ -1,7 +1,7 @@
 {
   "name": "@blackprint/cli-tools",
   "description": "Blackprint CLI tools",
-  "version": "0.3.17",
+  "version": "0.3.18",
   "author": "ScarletsFiction",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,7 @@
     "chokidar": "^3.5.2",
     "chalk": "^4.1.1",
     "gulp": "^4.0.2",
-    "scarletsframe-compiler": "0.6.19"
+    "scarletsframe-compiler": "0.6.20"
   },
   "keywords": [
     "blackprint"
