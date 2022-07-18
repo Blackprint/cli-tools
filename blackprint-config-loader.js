@@ -45,6 +45,31 @@ module.exports = function(SFC, Gulp){
 		}
 	}
 
+	function deepProperty(obj, path, value, onCreate){
+		var temp;
+		if(value !== void 0){
+			for(var i = 0, n = path.length-1; i < n; i++){
+				temp = path[i];
+				if(obj[temp] === void 0){
+					obj[temp] = {};
+					onCreate && onCreate(obj[temp]);
+				}
+	
+				obj = obj[temp];
+			}
+	
+			obj[path[i]] = value;
+			return;
+		}
+	
+		for(var i = 0; i < path.length; i++){
+			if((obj = obj[path[i]]) === void 0)
+				return;
+		}
+	
+		return obj;
+	}
+
     fs.mkdirSync(currentPath+'/dist', {recursive: true});
 
 	let oldConfig = {};
@@ -135,6 +160,73 @@ module.exports = function(SFC, Gulp){
 
 		if(event === 'add'){
 			if(config.disabled) return;
+
+			if(config.js != null){
+				// Extract JSDoc for Blackprint nodes if exist
+				if(config.bpDocs != null){
+					let dir = config.bpDocs;
+					if(dir.includes('@cwd'))
+						dir = dir.replace('@cwd', currentPath);
+
+					let docs = {};
+					let that = config.js;
+
+					that.onEvent = {
+						fileCompiled(content){that.onEvent.fileModify(content)},
+						fileModify(content, filePath){
+							content.replace(/\/\*\*(.*?)\*\//gs, function(full, match){
+								// Only process if "@blackprint" was found in the file content
+								if(!match.includes('@blackprint')) return;
+
+								match = match
+									.replace(/\t+/g, '')
+									.replace(/^[ \t]+?\* /gm, '')
+									.replace(/^@blackprint.*?$\b/gm, '')
+									.trim();
+
+								let output = {};
+								let input = {};
+								let hasIO = {input: false, output: false};
+								let namespace = '';
+
+								// Get the class content below the docs
+								let slice = content.slice(content.indexOf(full)+full.length);
+								slice.replace(/registerNode\(['"`](.*?)['"`].*(?=registerNode\()/gms, function(full, match){
+									namespace = match;
+									full.replace(/static (input|output)(.*?)}(;|\n)/gms, function(full, which, content){
+										content.replace(/\/\*\*(.*?)\*\/\s+(.*?):/gs, function(full, docs, portName){
+											let obj = which === 'output' ? output : input;
+											obj[portName] = {description: docs.replace(/^[ \t]+?\* /gm, '').trim()};
+
+											hasIO[which] = true;
+										});
+									});
+								});
+
+								if(namespace === '') return;
+
+								let tags = {};
+								let data = {
+									tags,
+									description: match.replace(/^@(\w+) (.*?)$/gm, function(full, name, desc){
+										tags[name] = desc;
+										return '';
+									}).trim(),
+								};
+
+								if(hasIO.input) data.input = input;
+								if(hasIO.output) data.output = output;
+
+								deepProperty(docs, namespace.split('/'), data);
+							});
+						},
+						scanFinish(){
+							fs.writeFileSync(dir, JSON.stringify(docs));
+							SFC.socketSync('bp-docs-append', docs, "Blackprint docs updated");
+						}
+					}
+				}
+			}
 
 			SFC.importConfig(config.name, config);
 			console.log(`[Blackprint] "${config.name}" config was added`);
