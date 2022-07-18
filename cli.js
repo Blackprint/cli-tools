@@ -70,6 +70,13 @@ var command = {
 		call(){
 			command.build.call('@serve');
 		}
+	},
+	create: {
+		shortDesc: "Create a new Blackprint module from template",
+		longDesc: "Example command:\nblackprint create",
+		call(){
+			require('./create-from-template.js')();
+		}
 	}
 };
 
