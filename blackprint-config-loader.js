@@ -1,8 +1,11 @@
-var fs = require('fs');
-var Path = require('path');
-var chalk = require('chalk');
-var chokidar = require('chokidar');
-var currentPath = process.cwd();
+let fs = require('fs');
+let Path = require('path');
+let chalk = require('chalk');
+let chokidar = require('chokidar');
+let yargs = require('yargs');
+let { hideBin } = require('yargs/helpers');
+let argv = yargs(hideBin(process.argv)).argv;
+let currentPath = process.cwd();
 
 module.exports = function(SFC, Gulp){
 	let resolvePath = require('path').resolve;
@@ -88,12 +91,16 @@ module.exports = function(SFC, Gulp){
 		if(!config.name)
 			throw new Error("Blackprint config must have a name, please use the template if you're creating new project.");
 
-		if(config.js && config.js.combine){
-			let temp = config.js.combine;
-			if(temp.constructor === String)
-				config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
-			else
-				temp.push('!blackprint.config.js', '!dist/**/*');
+		if(config.js){
+			config.js.filePath = config.js.file;
+
+			if(config.js.combine){
+				let temp = config.js.combine;
+				if(temp.constructor === String)
+					config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
+				else
+					temp.push('!blackprint.config.js', '!dist/**/*');
+			}
 		}
 
 		let oldOnFinish = config.onFinish;
@@ -248,6 +255,31 @@ module.exports = function(SFC, Gulp){
 						scanFinish(){
 							fs.writeFileSync(dir, JSON.stringify(docs));
 							SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
+
+							let filePath = config.js.filePath.replace('@cwd/', '');
+							let host = argv.host;
+							let moduleCachePath;
+
+							if(argv.host){
+								if(host.includes('://')) host = host.split('://')[1];
+								host = host.split('/')[0].replace(':', '-').replace('..', '');
+	
+								moduleCachePath = `./node_modules/bpModuleCache/${host}/${filePath}`;
+								if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
+							}
+							else{
+								// Check for default host
+								for (let i=89; i <= 92; i++) {
+									moduleCachePath = `./node_modules/bpModuleCache/localhost-67${i}/${filePath}`;
+									if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
+									else break;
+								}
+							}
+
+							if(moduleCachePath != null){
+								fs.rmSync(moduleCachePath);
+								console.log("[Blackprint] Module cache was removed");
+							}
 						}
 					}
 				}
