@@ -13,8 +13,8 @@ module.exports = async function(){
 	}, {
 		name: 'ModuleName',
 		type: 'input',
-		message: 'Type your module name:',
-		default: 'untitled',
+		message: 'Type your module name (capitalized with no space or symbol):',
+		default: 'Untitled',
 	}, {
 		name: 'SelectTemplate',
 		message: 'Select a template to start working on your module:',
@@ -50,7 +50,7 @@ function handleAnswers(answers){
 	if(answers.SelectTemplate === 'ScarletsFrame - JavaScript'){
 		let path;
 		if(answers.UseCurrentFolder) path = '.';
-		else path = './'+answers.ModuleName;
+		else path = './nodes-'+answers.ModuleName;
 
 		let repoLink = 'https://github.com/Blackprint/template-js';
 		execSync(`git clone --depth 1 ${repoLink} ${path}`);
@@ -59,6 +59,7 @@ function handleAnswers(answers){
 		let _moduleName = answers.ModuleName.toLowerCase();
 		let replacement = {
 			'LibraryName': answers.ModuleName,
+			'libraryname': answers.ModuleName.toLowerCase(),
 			'bp-your-module-name': 'nodes-'+_moduleName,
 			'nodes-rename-me': 'nodes-'+_moduleName,
 			'https://github.com/your/repository.git': 'https://github.com/YourUsernameHere/nodes-'+_moduleName+'.git',
