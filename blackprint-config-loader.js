@@ -3,6 +3,7 @@ let Path = require('path');
 let chalk = require('chalk');
 let chokidar = require('chokidar');
 let yargs = require('yargs');
+let extractDocs = require('./utils/_extractDocs.js');
 let { hideBin } = require('yargs/helpers');
 let argv = yargs(hideBin(process.argv)).argv;
 let currentPath = process.cwd();
@@ -46,31 +47,6 @@ module.exports = function(SFC, Gulp){
 
 			return paths;
 		}
-	}
-
-	function deepProperty(obj, path, value, onCreate){
-		var temp;
-		if(value !== void 0){
-			for(var i = 0, n = path.length-1; i < n; i++){
-				temp = path[i];
-				if(obj[temp] === void 0){
-					obj[temp] = {};
-					onCreate && onCreate(obj[temp]);
-				}
-	
-				obj = obj[temp];
-			}
-	
-			obj[path[i]] = value;
-			return;
-		}
-	
-		for(var i = 0; i < path.length; i++){
-			if((obj = obj[path[i]]) === void 0)
-				return;
-		}
-	
-		return obj;
 	}
 
     fs.mkdirSync(currentPath+'/dist', {recursive: true});
@@ -134,7 +110,7 @@ module.exports = function(SFC, Gulp){
 		});
 
 		let moduleUrl = '';
-		['js', 'scss', 'html', 'sf'].forEach(which => {
+		['ts', 'js', 'scss', 'html', 'sf'].forEach(which => {
 			let that = config[which];
 			if(that){
 				if(moduleUrl === '' || which === 'js'){
@@ -179,78 +155,11 @@ module.exports = function(SFC, Gulp){
 					let that = config.js;
 
 					that.onEvent = {
-						fileCompiled(content, rawContent){that.onEvent.fileModify(rawContent || content)},
+						fileCompiled(content, rawContent){
+							that.onEvent.fileModify(rawContent || content);
+						},
 						fileModify(content, filePath){
-							let contents = [];
-							content.replace(/\/\*\*.*?\*\//gs, function(full, index){
-								if(!full.includes('* @blackprint')) return;
-								contents.push(index);
-							});
-
-							for (let i=0; i < contents.length; i++)
-								contents[i] = content.slice(contents[i], contents[i+1]);
-
-							for (let i=0; i < contents.length; i++) {
-								content = contents[i]; // this have a purposes, don't delete before checking
-								content.replace(/\/\*\*(.*?)\*\//gs, function(full, match){
-									// Only process if "@blackprint" was found in the file content
-									if(!match.includes('@blackprint')) return;
-
-									match = match
-										.replace(/\t+/g, '')
-										.replace(/^[ \t]+?\* /gm, '')
-										.replace(/^@blackprint.*?$\b/gm, '')
-										.trim();
-
-									let output = {};
-									let input = {};
-									let hasIO = {input: false, output: false};
-									let namespace = '';
-
-									// Get the class content below the docs
-									let slice = content.slice(content.indexOf(full)+full.length);
-									slice.replace(/\bregisterNode\(['"`](.*?)['"`].*?^}/ms, function(full, match){
-										namespace = match;
-										full.replace(/static (input|output)(.*?)}(;|\n)/gms, function(full, which, content){
-											// Obtain documentation for StructOf first
-											content.replace(/^(\s+).*?(\S+):.*?\bStructOf\(.*?{(.*?)\1}/gms, function(full, s, rootName, content){
-												content.replace(/\/\*\*(.*?)\*\/\s+(.*?):/gs, function(full, docs, portName){
-													hasIO[which] = true;
-
-													let obj = which === 'output' ? output : input;
-													obj[rootName+portName] = {description: docs.replace(/^[ \t]+?\* /gm, '').trim()};
-												});
-
-												return full.replace(content, '');
-											})
-											.replace(/\/\*\*(.*?)\*\/\s+(.*?):/gs, function(full, docs, portName){
-												hasIO[which] = true;
-
-												let obj = which === 'output' ? output : input;
-												obj[portName] = {description: docs.replace(/^[ \t]+?\* /gm, '').trim()};
-											});
-										});
-									});
-
-									if(namespace === '') return;
-
-									let tags = {};
-									let hasTags = false;
-									let data = {
-										description: match.replace(/^@(\w+) (.*?)$/gm, function(full, name, desc){
-											hasTags = true;
-											tags[name] = desc;
-											return '';
-										}).trim(),
-									};
-
-									if(hasTags) data.tags = tags;
-									if(hasIO.input) data.input = input;
-									if(hasIO.output) data.output = output;
-
-									deepProperty(docs, namespace.split('/'), data);
-								});
-							}
+							extractDocs(content, filePath, docs);
 						},
 						scanFinish(){
 							fs.writeFileSync(dir, JSON.stringify(docs));
@@ -285,6 +194,41 @@ module.exports = function(SFC, Gulp){
 				}
 			}
 
+			if(config.ts != null && config.ts.scanDocs){
+				// Extract JSDoc for Blackprint nodes if exist
+				if(config.bpDocs != null){
+					let dir = config.bpDocs;
+					if(dir.includes('@cwd'))
+						dir = dir.replace('@cwd', currentPath);
+
+					let initScan = setTimeout(()=> {
+						console.log("Initial scan was longer than 1min:", config.ts.scanDocs);
+					}, 60000);
+
+					let save = 0;
+					let docs = {};
+					function onChange(file, stats){
+						file = currentPath + '/' + file;
+						extractDocs(fs.readFileSync(file).toString('utf8'), file, docs);
+
+						clearTimeout(save);
+						save = setTimeout(()=> {
+							fs.writeFileSync(dir, JSON.stringify(docs));
+							SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
+						}, 3000);
+					}
+
+					config._tsDocsWatch = chokidar.watch(config.ts.scanDocs, {
+							cwd: currentPath,
+							alwaysStat: false,
+							ignored: (path => path.includes('node_modules') || path.includes('.git') || path.includes('turbo_modules'))
+						})
+						.on('add', onChange).on('change', onChange)
+						.on('ready', () => clearTimeout(initScan))
+						.on('error', console.error);
+				}
+			}
+
 			SFC.importConfig(config.name, config);
 			console.log(`[Blackprint] "${config.name}" config was added`);
 			moduleList[config.name] = moduleUrl;
@@ -294,6 +238,8 @@ module.exports = function(SFC, Gulp){
 				SFC.importConfig(config.name, config);
 				moduleList[config.name] = moduleUrl;
 				console.log(`[Blackprint] "${config.name}" config was enabled`);
+
+				config._tsDocsWatch?.close();
 			}
 			else{
 				let old = oldConfig[_path];
