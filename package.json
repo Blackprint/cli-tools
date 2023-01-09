@@ -14,6 +14,7 @@
   "bin": {
     "blackprint": "./cli.js"
   },
+  "main": "index.js",
   "homepage": "http://stefansarya.gitbook.io/blackprint",
   "dependencies": {
     "@babel/core": "^7.20.2",
