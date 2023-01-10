@@ -27,7 +27,7 @@
     "gulp": "^4.0.2",
     "inquirer": "^9.1.4",
     "replace-in-file": "^6.3.5",
-    "scarletsframe-compiler": "0.6.24",
+    "scarletsframe-compiler": "0.6.25",
     "yargs": "^17.6.0",
     "vinyl": "^2.2.1"
   },

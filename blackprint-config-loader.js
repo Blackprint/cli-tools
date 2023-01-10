@@ -209,7 +209,7 @@ module.exports = function(SFC, Gulp){
 					let docs = {};
 					function onChange(file, stats){
 						file = currentPath + '/' + file;
-						extractDocs(fs.readFileSync(file).toString('utf8'), file, docs);
+						extractDocs(fs.readFileSync(file, 'utf8'), file, docs);
 
 						clearTimeout(save);
 						save = setTimeout(()=> {

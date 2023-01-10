@@ -21,6 +21,8 @@ module.exports = async function(){
 		type: 'rawlist',
 		choices: [{
 			name: 'ScarletsFrame - JavaScript', checked: true
+		}, {
+			name: 'ScarletsFrame - TypeScript'
 		}],
 		default: 0,
 	}]);
@@ -66,9 +68,44 @@ function handleAnswers(answers){
 			'/gh/blackprint/template-js@dist': '/gh/YourUsernameHere/nodes-'+_moduleName+'@dist',
 		};
 
-		let aa = replace.sync({
+		replace.sync({
 			files: [
 				`${path}/**/*.md`,
+				`${path}/**/*.js`,
+				`${path}/**/*.css`,
+				`${path}/**/*.sf`,
+				`${path}/**/*.html`,
+				`${path}/**/*.json`,
+			],
+			from: Object.keys(replacement).map(v => {
+				return RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+			}),
+			to: Object.values(replacement),
+		});
+	}
+	else if(answers.SelectTemplate === 'ScarletsFrame - TypeScript'){
+		let path;
+		if(answers.UseCurrentFolder) path = '.';
+		else path = './nodes-'+answers.ModuleName;
+
+		let repoLink = 'https://github.com/Blackprint/template-ts';
+		execSync(`git clone --depth 1 ${repoLink} ${path}`);
+		fs.rmSync(`${path}/.git`, { recursive: true });
+
+		let _moduleName = answers.ModuleName.toLowerCase();
+		let replacement = {
+			'LibraryName': answers.ModuleName,
+			'libraryname': answers.ModuleName.toLowerCase(),
+			'bp-your-module-name': 'nodes-'+_moduleName,
+			'nodes-rename-me': 'nodes-'+_moduleName,
+			'https://github.com/your/repository.git': 'https://github.com/YourUsernameHere/nodes-'+_moduleName+'.git',
+			'/gh/blackprint/template-ts@dist': '/gh/YourUsernameHere/nodes-'+_moduleName+'@dist',
+		};
+
+		replace.sync({
+			files: [
+				`${path}/**/*.md`,
+				`${path}/**/*.ts`,
 				`${path}/**/*.js`,
 				`${path}/**/*.css`,
 				`${path}/**/*.sf`,
