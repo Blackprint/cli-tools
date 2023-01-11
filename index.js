@@ -50,8 +50,11 @@ module.exports = {
 			}
 		},
 		preferCDN(srcRoot, resolves) {
-			let filter = createRegExp(Object.keys(resolves));
+			let keys = Object.keys(resolves);
+			if(keys.length === 0)
+				throw new Error("Module name and URL need to be specified when using 'preferCDN' plugin");
 
+			let filter = createRegExp(keys);
 			return {
 				name: "bp-prefer-cdn",
 				setup(build) {
