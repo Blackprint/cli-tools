@@ -79,6 +79,10 @@ module.exports = function(SFC, Gulp){
 			}
 		}
 
+		if(config.ts){
+			config.ts.filePath = config.ts.file;
+		}
+
 		let oldOnFinish = config.onFinish;
 		config.onFinish = function(which, path, ext){
 			let date = new Date();
@@ -212,10 +216,37 @@ module.exports = function(SFC, Gulp){
 						extractDocs(fs.readFileSync(file, 'utf8'), file, docs);
 
 						clearTimeout(save);
-						save = setTimeout(()=> {
-							fs.writeFileSync(dir, JSON.stringify(docs));
-							SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
-						}, 3000);
+						save = setTimeout(onFinish, 3000);
+					}
+
+					function onFinish(){
+						fs.writeFileSync(dir, JSON.stringify(docs));
+						SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
+
+						let filePath = config.ts.filePath.replace('@cwd/', '');
+						let host = argv.host;
+						let moduleCachePath;
+
+						if(argv.host){
+							if(host.includes('://')) host = host.split('://')[1];
+							host = host.split('/')[0].replace(':', '-').replace('..', '');
+	
+							moduleCachePath = `./node_modules/bpModuleCache/${host}/${filePath}`;
+							if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
+						}
+						else{
+							// Check for default host
+							for (let i=89; i <= 92; i++) {
+								moduleCachePath = `./node_modules/bpModuleCache/localhost-67${i}/${filePath}`;
+								if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
+								else break;
+							}
+						}
+
+						if(moduleCachePath != null){
+							fs.rmSync(moduleCachePath);
+							console.log("[Blackprint] Module cache was removed");
+						}
 					}
 
 					config._tsDocsWatch = chokidar.watch(config.ts.scanDocs, {
