@@ -63,10 +63,25 @@ module.exports = {
 					}));
 
 					build.onLoad({ filter, namespace: "bp-plugins"}, async val => {
+						let url = resolves[val.path];
+						let globall = '';
+
+						if(url.constructor === Object){
+							globall = url.globalVar;
+							url = url.url;
+						}
+
+						let append = `await _imports_(${JSON.stringify(val.path)}, ${JSON.stringify(url)})`;
+
+						if(globall){
+							append = `(globall[${JSON.stringify(globall)}] || ${append})`;
+						}
+
 						return {
 							resolveDir: srcRoot, loader: "ts", contents: `
 							import { _imports_ } from "@_bp_internal";
-							export default await _imports_(${JSON.stringify(val.path)}, ${JSON.stringify(resolves[val.path])});`,
+							let globall = typeof window !== 'undefined' ? window : globalThis;
+							export default ${append};`,
 						};
 					});
 				},
