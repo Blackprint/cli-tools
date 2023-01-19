@@ -35,7 +35,7 @@ module.exports = {
 										return (await sf.loader.mjs([url]))[0];
 									}
 
-									return await import(loadFromURL ? moduleName : url);
+									return await import(loadFromURL ? url : moduleName);
 								};`,
 							}
 						}

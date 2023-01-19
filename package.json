@@ -1,7 +1,7 @@
 {
   "name": "@blackprint/cli-tools",
   "description": "Blackprint CLI tools",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "author": "ScarletsFiction",
   "license": "MIT",
   "repository": {
@@ -15,7 +15,6 @@
     "blackprint": "./cli.js"
   },
   "main": "index.js",
-  "homepage": "http://stefansarya.gitbook.io/blackprint",
   "dependencies": {
     "@babel/core": "^7.20.2",
     "@babel/parser": "^7.20.3",
