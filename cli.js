@@ -43,6 +43,12 @@ var command = {
 							res.end(JSON.stringify(configLoader.moduleList));
 							next();
 						}
+					}, {
+						route: "/",
+						handle(req, res, next){
+							res.end(`<br><p style="font-family: 'Arial'; font-size: 16px;">Please use <b>Blackprint Editor in development mode</b> to connect into this module server for loading your node modules.</p>`);
+							next();
+						}
 					}]
 				},
 
