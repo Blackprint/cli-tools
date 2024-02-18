@@ -177,13 +177,13 @@ module.exports = function(SFC, Gulp){
 								if(host.includes('://')) host = host.split('://')[1];
 								host = host.split('/')[0].replace(':', '-').replace('..', '');
 	
-								moduleCachePath = `./node_modules/bpModuleCache/${host}/${filePath}`;
+								moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
 								if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 							}
 							else{
 								// Check for default host
 								for (let i=89; i <= 92; i++) {
-									moduleCachePath = `./node_modules/bpModuleCache/localhost-67${i}/${filePath}`;
+									moduleCachePath = `./.bp_cache/modules/localhost-67${i}/${filePath}`;
 									if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 									else break;
 								}
@@ -231,13 +231,13 @@ module.exports = function(SFC, Gulp){
 							if(host.includes('://')) host = host.split('://')[1];
 							host = host.split('/')[0].replace(':', '-').replace('..', '');
 	
-							moduleCachePath = `./node_modules/bpModuleCache/${host}/${filePath}`;
+							moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
 							if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 						}
 						else{
 							// Check for default host
 							for (let i=89; i <= 92; i++) {
-								moduleCachePath = `./node_modules/bpModuleCache/localhost-67${i}/${filePath}`;
+								moduleCachePath = `./.bp_cache/modules/localhost-67${i}/${filePath}`;
 								if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 								else break;
 							}
