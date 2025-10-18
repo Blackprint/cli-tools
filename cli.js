@@ -83,11 +83,33 @@ var command = {
 		call(){
 			require('./create-from-template.js')();
 		}
-	}
+	},
+	'run:relay': {
+		shortDesc: "Start a relay server for remote control",
+		longDesc: "Start a relay server that can be used for remote controling a Blackprint engine",
+		call(){
+			let remotePort = undefined;
+			let cors = undefined;
+
+			process.argv.forEach(v => {
+				if(v.startsWith('--remote=')){
+					let port = Number(v.replace('--remote=', ''));
+					if(!port) throw new Error('--remote=port must be number, but get: ' + port);
+					remotePort = port;
+				}
+				else if(v.startsWith('--cors=')){
+					cors = v.replace('--cors=', '').replace(/['"]/g, '').split(',');
+				}
+			});
+
+			require('./utils/runRelay.js')(remotePort, cors);
+		}
+	},
 };
 
 // No need to modify below
-var args = process.argv.slice(2);
+var args = globalThis.process?.argv.slice(2) || globalThis.Deno;
+
 if(args[0] === void 0 || /-h|--h|\/h|\/help|help/.test(args[0])){
 	console.log("Available commands:");
 
