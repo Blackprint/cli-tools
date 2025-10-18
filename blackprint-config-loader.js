@@ -148,55 +148,54 @@ module.exports = function(SFC, Gulp){
 		if(event === 'add'){
 			if(config.disabled) return;
 
-			if(config.js != null){
-				// Extract JSDoc for Blackprint nodes if exist
-				if(config.bpDocs != null){
-					let dir = config.bpDocs;
-					if(dir.includes('@cwd'))
-						dir = dir.replace('@cwd', currentPath);
+			[config.js, config.sf].forEach(that => {
+				if(that != null){
+					// Extract JSDoc for Blackprint nodes if exist
+					if(config.bpDocs != null){
+						let dir = config.bpDocs;
+						if(dir.includes('@cwd')) dir = dir.replace('@cwd', currentPath);
 
-					let docs = {};
-					let that = config.js;
+						let docs = {};
+						that.onEvent = {
+							fileCompiled(content, rawContent){
+								that.onEvent.fileModify(rawContent || content);
+							},
+							fileModify(content, filePath){
+								extractDocs(content, filePath, docs);
+							},
+							scanFinish(){
+								fs.writeFileSync(dir, JSON.stringify(docs));
+								SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
 
-					that.onEvent = {
-						fileCompiled(content, rawContent){
-							that.onEvent.fileModify(rawContent || content);
-						},
-						fileModify(content, filePath){
-							extractDocs(content, filePath, docs);
-						},
-						scanFinish(){
-							fs.writeFileSync(dir, JSON.stringify(docs));
-							SFC.socketSync?.('bp-docs-append', docs, "Blackprint docs updated");
+								let filePath = that.filePath.replace('@cwd/', '');
+								let host = argv.host;
+								let moduleCachePath;
 
-							let filePath = config.js.filePath.replace('@cwd/', '');
-							let host = argv.host;
-							let moduleCachePath;
-
-							if(argv.host){
-								if(host.includes('://')) host = host.split('://')[1];
-								host = host.split('/')[0].replace(':', '-').replace('..', '');
-	
-								moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
-								if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
-							}
-							else{
-								// Check for default host
-								for (let i=89; i <= 92; i++) {
-									moduleCachePath = `./.bp_cache/modules/localhost-67${i}/${filePath}`;
+								if(argv.host){
+									if(host.includes('://')) host = host.split('://')[1];
+									host = host.split('/')[0].replace(':', '-').replace('..', '');
+		
+									moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
 									if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
-									else break;
 								}
-							}
+								else{
+									// Check for default host
+									for (let i=89; i <= 92; i++) {
+										moduleCachePath = `./.bp_cache/modules/localhost-67${i}/${filePath}`;
+										if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
+										else break;
+									}
+								}
 
-							if(moduleCachePath != null){
-								fs.rmSync(moduleCachePath);
-								console.log("[Blackprint] Module cache was removed");
+								if(moduleCachePath != null){
+									fs.rmSync(moduleCachePath);
+									console.log("[Blackprint] Module cache was removed");
+								}
 							}
 						}
 					}
 				}
-			}
+			});
 
 			if(config.ts != null && config.ts.scanDocs){
 				// Extract JSDoc for Blackprint nodes if exist
