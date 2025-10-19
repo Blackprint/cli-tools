@@ -72,15 +72,19 @@ module.exports = function(SFC, Gulp){
 
 			if(config.js.combine){
 				let temp = config.js.combine;
-				if(temp.constructor === String)
-					config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
-				else
-					temp.push('!blackprint.config.js', '!dist/**/*');
+				// if(temp.constructor === String)
+				// 	config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
+				// else
+				// 	temp.push('!blackprint.config.js', '!dist/**/*');
 			}
 		}
 
 		if(config.ts){
 			config.ts.filePath = config.ts.file;
+		}
+
+		if(config.sf){
+			config.sf.filePath = config.sf.file;
 		}
 
 		let oldOnFinish = config.onFinish;
@@ -174,7 +178,7 @@ module.exports = function(SFC, Gulp){
 								if(argv.host){
 									if(host.includes('://')) host = host.split('://')[1];
 									host = host.split('/')[0].replace(':', '-').replace('..', '');
-		
+
 									moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
 									if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 								}
@@ -229,7 +233,7 @@ module.exports = function(SFC, Gulp){
 						if(argv.host){
 							if(host.includes('://')) host = host.split('://')[1];
 							host = host.split('/')[0].replace(':', '-').replace('..', '');
-	
+
 							moduleCachePath = `./.bp_cache/modules/${host}/${filePath}`;
 							if(!fs.existsSync(moduleCachePath)) moduleCachePath = null;
 						}
