@@ -36,3 +36,9 @@ If you installed this with `package.json` on your project, you can use npx.
 ```sh
 $ npx blackprint build
 ```
+
+### Run relay server for remote control Blackprint instance
+Before using this, you must install `@blackprint/remote-control` module on your current workspace.
+```sh
+$ blackprint run:relay
+```
