@@ -72,10 +72,10 @@ module.exports = function(SFC, Gulp){
 
 			if(config.js.combine){
 				let temp = config.js.combine;
-				// if(temp.constructor === String)
-				// 	config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
-				// else
-				// 	temp.push('!blackprint.config.js', '!dist/**/*');
+				if(temp.constructor === String)
+					config.js.combine = [temp, '!blackprint.config.js', '!dist/**/*'];
+				else
+					temp.push('!blackprint.config.js', '!dist/**/*');
 			}
 		}
 
